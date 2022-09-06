@@ -244,9 +244,6 @@ const runJob = async () => {
   console.log(allJobIds, "ALL JOB IDSS");
   // filter the jobs
   const filteredJobs = data.jobs.filter((eachJob) => {
-    console.log(eachJob.id);
-    console.log(typeof eachJob.id);
-    console.log(allJobIds.includes(eachJob.id.toString()), "INCLUDES?");
     return !allJobIds.includes(eachJob.id.toString());
   });
   console.log(filteredJobs.length, "FILTERED JOB LENGHT");
