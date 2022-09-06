@@ -266,5 +266,5 @@ const runJob = async () => {
   console.log(filteredJobs.length, "final filtered jobs added");
 };
 
-const job = new CronJob("0 */60 * * * *", runJob);
+const job = new CronJob("0 */5 * * * *", runJob);
 job.start();
