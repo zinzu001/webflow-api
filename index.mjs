@@ -227,26 +227,47 @@ const getOneItem = async () => {
   console.log(response);
 };
 const getAllCurrentJobIds = async () => {
-  const response = await webflow.items(
-    {
-      collectionId: currentOffersCollectionId,
-    },
-    { limit: 100 }
-  );
+  const response = await webflow.items({
+    collectionId: currentOffersCollectionId,
+  });
   const allJobIds = response.items.map((item) => item.jobid);
   return allJobIds;
 };
 
+const removeJobsFromWebflow = async (itemIds) => {
+  for (const itemId of itemIds) {
+    const response = await webflow.removeItem({
+      collectionId: currentOffersCollectionId,
+      itemId,
+    });
+    console.log(response);
+  }
+};
 const runJob = async () => {
   // get the jobs
   const data = await getJobs();
-  const allJobIds = await getAllCurrentJobIds();
+  const allJobsOnWebflow = await getAllCurrentJobIds();
+  const allJobIds = allJobsOnWebflow.map((allJob) => allJob.jobid);
   console.log(allJobIds, "ALL JOB IDSS");
   // filter the jobs
   const filteredJobs = data.jobs.filter((eachJob) => {
     return !allJobIds.includes(eachJob.id.toString());
   });
   console.log(filteredJobs.length, "FILTERED JOB LENGHT");
+  // find the jobs that are removed and remove from Webflow
+  const jobIdsFromData = data.jobs.map((eachJob) => eachJob.id.toString());
+  const removedJobsIds = allJobIds.filter(
+    (jobId) => !jobIdsFromData.includes(jobId)
+  );
+  console.log(removedJobsIds, "REMOVED");
+  const removeJobs = allJobsOnWebflow.filter((eachJobOnWebflow) =>
+    removedJobsIds.includes(eachJobOnWebflow.jobid)
+  );
+  console.log(removeJobs);
+  const removeJobsCids = removeJobs.map((removeJob) => removeJob["_id"]);
+  console.log(removeJobsCids);
+  await removeJobsFromWebflow(removeJobsCids);
+
   // add the filtered jobs
   for (const job of filteredJobs) {
     const finalJobData = await addItem(job);
