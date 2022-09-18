@@ -247,16 +247,15 @@ const runJob = async () => {
   // get the jobs
   const data = await getJobs();
   const allJobsOnWebflow = await getAllCurrentJobIds();
-  const allJobIds = allJobsOnWebflow.map((allJob) => allJob.jobid);
-  console.log(allJobIds, "ALL JOB IDSS");
+  console.log(allJobsOnWebflow, "ALL JOB IDSS ON WEBFLOW");
   // filter the jobs
   const filteredJobs = data.jobs.filter((eachJob) => {
-    return !allJobIds.includes(eachJob.id.toString());
+    return !allJobsOnWebflow.includes(eachJob.id.toString());
   });
   console.log(filteredJobs.length, "FILTERED JOB LENGHT");
   // find the jobs that are removed and remove from Webflow
   const jobIdsFromData = data.jobs.map((eachJob) => eachJob.id.toString());
-  const removedJobsIds = allJobIds.filter(
+  const removedJobsIds = allJobsOnWebflow.filter(
     (jobId) => !jobIdsFromData.includes(jobId)
   );
   console.log(removedJobsIds, "REMOVED");
