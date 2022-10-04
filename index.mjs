@@ -9,6 +9,19 @@ const currentOffersCollectionId = "6316df1c196af5f7620467e7";
 function containsAnyLetter(str) {
   return /[a-zA-Z]/.test(str);
 }
+const characters =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+function generateString(length) {
+  let result = "";
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+
+  return result;
+}
+
 const webflow = new Webflow({ token: token });
 const regions = [
   {
@@ -149,12 +162,14 @@ let timeout = 0;
 
 // ADD ITEM FUNCTION
 const addItem = async (job) => {
+  const randomString = generateString(3);
+  console.log(randomString, "RANDOM STRING");
   const fields = {};
 
   fields.name = job.title;
 
-  fields.slug = job.id.toString();
-
+  fields.slug = `${job.id.toString()}${randomString}`;
+  console.log(fields.slug, "SLUG");
   fields["type-de-contrat-contract-type-abbreviation"] =
     job.contract_type_abbreviation;
 
@@ -226,11 +241,11 @@ const getOneItem = async () => {
   });
   console.log(response);
 };
-const getAllCurrentJobIds = async () => {
+const getAllCurrentJobs = async () => {
   const response = await webflow.items({
     collectionId: currentOffersCollectionId,
   });
-  const allJobIds = response.items.map((item) => item.jobid);
+  const allJobIds = response.items;
   return allJobIds;
 };
 
@@ -245,28 +260,33 @@ const removeJobsFromWebflow = async (itemIds) => {
 };
 const runJob = async () => {
   // get the jobs
-  const data = await getJobs();
-  const allJobsOnWebflow = await getAllCurrentJobIds();
-  const allJobIds = allJobsOnWebflow.map((allJob) => allJob.jobid);
-  console.log(allJobIds, "ALL JOB IDSS");
+  const [data, allJobsOnWebflow] = await Promise.all([
+    getJobs(),
+    getAllCurrentJobs(),
+  ]);
+  const allJobIdsOnWebflow = allJobsOnWebflow.map((item) => item.jobid);
   // filter the jobs
   const filteredJobs = data.jobs.filter((eachJob) => {
-    return !allJobIds.includes(eachJob.id.toString());
+    return !allJobIdsOnWebflow.includes(eachJob.id.toString());
   });
-  console.log(filteredJobs.length, "FILTERED JOB LENGHT");
   // find the jobs that are removed and remove from Webflow
   const jobIdsFromData = data.jobs.map((eachJob) => eachJob.id.toString());
-  const removedJobsIds = allJobIds.filter(
+  const removedJobsIds = allJobIdsOnWebflow.filter(
     (jobId) => !jobIdsFromData.includes(jobId)
   );
-  console.log(removedJobsIds, "REMOVED");
   const removeJobs = allJobsOnWebflow.filter((eachJobOnWebflow) =>
     removedJobsIds.includes(eachJobOnWebflow.jobid)
   );
-  console.log(removeJobs);
+  console.log(removeJobs, "jobs to be removed");
   const removeJobsCids = removeJobs.map((removeJob) => removeJob["_id"]);
-  console.log(removeJobsCids);
-  await removeJobsFromWebflow(removeJobsCids);
+  console.log(removeJobsCids, "cid of jobs to be removed");
+  const removeJobPromises = removeJobsCids.map(async (item) => {
+    const response = await webflow.removeItem({
+      collectionId: currentOffersCollectionId,
+      item,
+    });
+  });
+  Promise.all(removeJobPromises);
 
   // add the filtered jobs
   for (const job of filteredJobs) {
@@ -283,6 +303,8 @@ const runJob = async () => {
   console.log(data.jobs.length, "total jobs quered");
   console.log(filteredJobs.length, "final filtered jobs added");
 };
+
+await runJob();
 
 const job = new CronJob("0 */60 * * * *", runJob);
 job.start();
