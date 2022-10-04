@@ -163,13 +163,12 @@ let timeout = 0;
 // ADD ITEM FUNCTION
 const addItem = async (job) => {
   const randomString = generateString(3);
-  console.log(randomString, "RANDOM STRING");
   const fields = {};
 
   fields.name = job.title;
 
   fields.slug = `${job.id.toString()}${randomString}`;
-  console.log(fields.slug, "SLUG");
+
   fields["type-de-contrat-contract-type-abbreviation"] =
     job.contract_type_abbreviation;
 
@@ -194,7 +193,6 @@ const addItem = async (job) => {
 
   fields.longitude = job.longitude;
   // zipcode to region logic
-  console.log(job.zipcode, "job.zipcode");
   if (job.zipcode) {
     if (!containsAnyLetter(job.zipcode)) {
       const jobZipcode = job.zipcode;
@@ -205,7 +203,6 @@ const addItem = async (job) => {
       const matchedRegion = regions.find((region) =>
         region.departements.includes(slicedZipCode)
       );
-      console.log(matchedRegion, slicedZipCode);
       fields["region"] = matchedRegion.name;
     } else {
       fields["region"] = job.zipcode;
