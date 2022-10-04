@@ -277,10 +277,10 @@ const runJob = async () => {
   console.log(removeJobs, "jobs to be removed");
   const removeJobsCids = removeJobs.map((removeJob) => removeJob["_id"]);
   console.log(removeJobsCids, "cid of jobs to be removed");
-  const removeJobPromises = removeJobsCids.map(async (item) => {
+  const removeJobPromises = removeJobsCids.map(async (itemId) => {
     const response = await webflow.removeItem({
       collectionId: currentOffersCollectionId,
-      item,
+      itemId,
     });
   });
   Promise.all(removeJobPromises);
