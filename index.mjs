@@ -245,7 +245,42 @@ const getAllCurrentJobs = async () => {
   const allJobIds = response.items;
   return allJobIds;
 };
+// logic for fetching all items with offset
+const url =
+  "https://api.webflow.com/collections/63e0bea6678a170ee036d2a6/items";
+const options = {
+  method: "GET",
+  headers: {
+    accept: "application/json",
+    authorization:
+      "Bearer b327d00546907ffaf8e5df1dea23e9436be263c2b6d559cc0736d672a04ffa4c",
+  },
+};
+const itemsPerPage = 100;
+let items = [];
 
+async function fetchItems(offset) {
+  const res = await fetch(
+    `${url}?limit=${itemsPerPage}&offset=${offset}`,
+    options
+  );
+  const json = await res.json();
+  return json.items;
+}
+
+async function fetchAllItems() {
+  let offset = 0;
+  let moreItemsAvailable = true;
+
+  while (moreItemsAvailable) {
+    const currentItems = await fetchItems(offset);
+    items = [...items, ...currentItems];
+    offset += itemsPerPage;
+    moreItemsAvailable = currentItems.length === itemsPerPage;
+  }
+
+  return items;
+}
 const removeJobsFromWebflow = async (itemIds) => {
   for (const itemId of itemIds) {
     const response = await webflow.removeItem({
@@ -259,7 +294,7 @@ const runJob = async () => {
   // get the jobs
   const [data, allJobsOnWebflow] = await Promise.all([
     getJobs(),
-    getAllCurrentJobs(),
+    fetchAllItems(),
   ]);
   const allJobIdsOnWebflow = allJobsOnWebflow.map((item) => item.jobid);
   // filter the jobs
@@ -296,7 +331,7 @@ const runJob = async () => {
     }
   }
 
-  console.log("job ran!");
+  console.log("job ran! at", new Date().toLocaleString());
   console.log(data.jobs.length, "total jobs quered");
   console.log(filteredJobs.length, "final filtered jobs added");
 };
